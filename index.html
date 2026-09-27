@@ -24,93 +24,49 @@
 <div><strong id="mChanges">0</strong><span>changes</span></div>
 </div>
 </section>
-
 <section class="card">
 <small>01 // WORKSPACE</small><h3>Bring Relay aboard</h3>
 <p>Import a folder from Files. Pocket Relay copies it into private on-device browser storage.</p>
 <label class="btn primary">Import workspace folder<input id="folder" type="file" webkitdirectory multiple hidden></label>
 <dl><dt>Name</dt><dd id="workspaceName">None</dd><dt>Files</dt><dd id="workspaceFiles">0</dd><dt>Storage</dt><dd>OPFS</dd></dl>
 </section>
-
 <section class="card">
 <small>02 // SESSION</small><h3>Track the work</h3>
 <label>Scoped goal<input id="goal" value="WORK_ON_RELAY_SOURCE"></label>
-<div class="row">
-<button id="begin" class="btn primary">Begin session</button>
-<button id="refresh" class="btn">Refresh</button>
-<button id="finish" class="btn">Finish</button>
-</div>
+<div class="row"><button id="begin" class="btn primary">Begin session</button><button id="refresh" class="btn">Refresh</button><button id="finish" class="btn">Finish</button></div>
 <dl><dt>Session</dt><dd id="session">None</dd><dt>Windows acceptance</dt><dd>PENDING</dd></dl>
 <pre id="changes">No active changes.</pre>
 </section>
-
 <section class="card accent">
 <small>03 // BRIAR FERRY</small><h3>Action in. Receipt out.</h3>
 <p>Paste or import a Pocket Action. Pocket Relay verifies pre-hashes, snapshots originals, applies exact replacements, checks post-hashes, and emits a receipt.</p>
 <label>Incoming Pocket Action<textarea id="action" rows="11" spellcheck="false"></textarea></label>
-<div class="row">
-<button id="paste" class="btn">Paste</button>
-<label class="btn">Import action<input id="actionFile" type="file" accept=".json,application/json" hidden></label>
-<button id="go" class="btn danger">GO</button>
-</div>
-<div class="row">
-<button id="copyReceipt" class="btn primary">Copy receipt</button>
-<button id="downloadReceipt" class="btn">Download receipt</button>
-<button id="rollback" class="btn">Rollback last</button>
-</div>
+<div class="row"><button id="paste" class="btn">Paste</button><label class="btn">Import action<input id="actionFile" type="file" accept=".json,application/json" hidden></label><button id="go" class="btn danger">GO</button></div>
+<div class="row"><button id="copyReceipt" class="btn primary">Copy receipt</button><button id="downloadReceipt" class="btn">Download receipt</button><button id="rollback" class="btn">Rollback last</button></div>
 <label>Latest receipt<textarea id="receipt" rows="10" readonly></textarea></label>
 </section>
-
-<section class="card">
-<small>04 // HANDOFF</small><h3>Carry the work home</h3>
-<div class="row">
-<button id="bundle" class="btn primary">Export work bundle</button>
-<button id="index" class="btn">Export workspace index</button>
-</div>
-</section>
-
+<section class="card"><small>04 // HANDOFF</small><h3>Carry the work home</h3><div class="row"><button id="bundle" class="btn primary">Export work bundle</button><button id="index" class="btn">Export workspace index</button></div></section>
 <section class="card accent">
 <small>05 // COURIER CRYPTO</small><h3>Build the lock before the mailbox</h3>
 <p>Phase 1 creates a Pocket Relay device identity locally and proves ECDH → HKDF-SHA-256 → AES-256-GCM without publishing any private payload.</p>
-<dl>
-<dt>Crypto</dt><dd id="cryptoSupport">CHECKING</dd>
-<dt>Device identity</dt><dd id="cryptoIdentity">NOT CREATED</dd>
-<dt>Private key</dt><dd id="cryptoPrivate">LOCAL ONLY</dd>
-</dl>
+<dl><dt>Crypto</dt><dd id="cryptoSupport">CHECKING</dd><dt>Device identity</dt><dd id="cryptoIdentity">NOT CREATED</dd><dt>Private key</dt><dd id="cryptoPrivate">LOCAL ONLY</dd></dl>
 <label>Public key fingerprint<textarea id="cryptoFingerprint" rows="3" readonly>None</textarea></label>
-<div class="row">
-<button id="cryptoCreate" class="btn primary">Create / load identity</button>
-<button id="cryptoCopy" class="btn">Copy pairing record</button>
-</div>
-<div class="row">
-<button id="cryptoTest" class="btn danger">Run crypto self-test</button>
-</div>
+<div class="row"><button id="cryptoCreate" class="btn primary">Create / load identity</button><button id="cryptoCopy" class="btn">Copy pairing record</button></div>
+<div class="row"><button id="cryptoTest" class="btn danger">Run crypto self-test</button></div>
 <pre id="cryptoResult">No crypto test run yet.</pre>
 <p class="micro">No GitHub token is stored here. The private key remains local and non-exportable.</p>
 </section>
-
 <section class="card accent">
-<small>06 // COURIER INBOX</small><h3>Stage the locked box</h3>
-<p>Phase 3 fetches and authenticates Courier envelopes, decrypts them locally, verifies the device and workspace target, then lets you stage the recovered Pocket Action into Briar Ferry.</p>
-<dl>
-<dt>Inbox</dt><dd id="courierInboxStatus">NOT CHECKED</dd>
-<dt>Authentication</dt><dd id="courierInboxAuth">PENDING</dd>
-<dt>Workspace target</dt><dd id="courierInboxTarget">PENDING</dd>
-<dt>Staging</dt><dd id="courierStageStatus">PENDING</dd>
-</dl>
-<div class="row">
-<button id="courierInboxCheck" class="btn primary">CHECK INBOX</button>
-<button id="courierStageAction" class="btn" disabled>STAGE ACTION</button>
-</div>
+<small>06 // COURIER INBOX</small><h3>Guard the mailbox</h3>
+<p>Phase 4 adds a persistent replay ledger. Authenticated messages can be staged once, execution is reserved before GO, and successful Courier actions are permanently marked consumed on this device.</p>
+<dl><dt>Inbox</dt><dd id="courierInboxStatus">NOT CHECKED</dd><dt>Authentication</dt><dd id="courierInboxAuth">PENDING</dd><dt>Workspace target</dt><dd id="courierInboxTarget">PENDING</dd><dt>Replay guard</dt><dd id="courierReplayStatus">PENDING</dd><dt>Staging</dt><dd id="courierStageStatus">PENDING</dd></dl>
+<div class="row"><button id="courierInboxCheck" class="btn primary">CHECK INBOX</button><button id="courierStageAction" class="btn" disabled>STAGE ACTION</button></div>
 <label>Message ID<textarea id="courierInboxMessage" rows="2" readonly>None</textarea></label>
 <label>Decrypted Courier action<textarea id="courierInboxPayload" rows="18" readonly>Nothing decrypted yet.</textarea></label>
-<p class="micro"><strong>STAGING DOES NOT EXECUTE.</strong> STAGE ACTION only copies the authenticated Pocket Action into Briar Ferry. Workspace mutation still requires a separate human press of <strong>GO</strong>.</p>
+<p class="micro"><strong>REPLAY GUARD.</strong> Consumed message IDs and action IDs are blocked before execution. A reservation is written before a Courier GO, then finalized only after a GREEN receipt. Rollback does not un-consume a message.</p>
 </section>
-
 <section class="card"><small>RECEIPT STREAM</small><h3>What just happened</h3><pre id="log">POCKET_RELAY_BOOT=GREEN</pre></section>
 </main>
-<footer>Pocket Relay Web v0.4 · CSR namespace · local-first · Courier Stage Phase 3</footer>
-<script src="courier-crypto.js"></script>
-<script src="app.js"></script>
-<script src="courier-inbox.js"></script>
+<footer>Pocket Relay Web v0.5 · CSR namespace · local-first · Courier Replay Guard Phase 4</footer>
+<script src="courier-crypto.js"></script><script src="app.js"></script><script src="courier-inbox.js"></script>
 </body></html>
