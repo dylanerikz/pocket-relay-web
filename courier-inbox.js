@@ -5,13 +5,19 @@ const COURIER_CONTENTS_API =
   "https://api.github.com/repos/dylanerikz/briar-courier-transport/contents/";
 
 const td = new TextDecoder();
+let selectedCourier = null;
+
 const U = {
   status: document.getElementById("courierInboxStatus"),
   auth: document.getElementById("courierInboxAuth"),
   target: document.getElementById("courierInboxTarget"),
+  stageStatus: document.getElementById("courierStageStatus"),
   message: document.getElementById("courierInboxMessage"),
   payload: document.getElementById("courierInboxPayload"),
   check: document.getElementById("courierInboxCheck"),
+  stage: document.getElementById("courierStageAction"),
+  ferryAction: document.getElementById("action"),
+  ferryGo: document.getElementById("go"),
   state: document.getElementById("state"),
   log: document.getElementById("log")
 };
@@ -26,7 +32,14 @@ function setState(x) {
   if (U.state) U.state.textContent = x;
 }
 
+function resetStage() {
+  selectedCourier = null;
+  U.stage.disabled = true;
+  U.stageStatus.textContent = "PENDING";
+}
+
 function fail(message) {
+  resetStage();
   U.status.textContent = "RED";
   U.auth.textContent = "REJECTED";
   U.target.textContent = "PENDING";
@@ -166,6 +179,7 @@ async function checkInbox() {
     return fail("CRYPTO_UNSUPPORTED");
   }
 
+  resetStage();
   setState("INBOX");
   U.status.textContent = "CHECKING";
   U.auth.textContent = "PENDING";
@@ -194,6 +208,7 @@ async function checkInbox() {
     U.status.textContent = "EMPTY";
     U.auth.textContent = "N/A";
     U.target.textContent = "N/A";
+    U.stageStatus.textContent = "N/A";
     U.payload.value = "No Courier envelopes found.";
     setState("GREEN");
     log("COURIER_INBOX=GREEN ENVELOPES=0");
@@ -243,6 +258,7 @@ async function checkInbox() {
     U.status.textContent = "NO MAIL";
     U.auth.textContent = "N/A";
     U.target.textContent = "N/A";
+    U.stageStatus.textContent = "N/A";
     U.payload.value = "No valid envelope addressed to this device.";
     setState("GREEN");
     log("COURIER_INBOX=GREEN ADDRESSED=0");
@@ -270,14 +286,49 @@ async function checkInbox() {
   U.message.value = selected.env.message_id;
   U.payload.value = JSON.stringify(selected.inner, null, 2);
 
+  if (targetMatch) {
+    selectedCourier = selected;
+    U.stage.disabled = false;
+    U.stageStatus.textContent = "READY";
+  } else {
+    selectedCourier = null;
+    U.stage.disabled = true;
+    U.stageStatus.textContent = "BLOCKED";
+  }
+
   setState(targetMatch ? "GREEN" : "REVIEW");
   log(
     "COURIER_INBOX=GREEN MESSAGE_ID=" +
     selected.env.message_id +
     " AUTH=GREEN TARGET=" +
     (targetMatch ? "GREEN" : "REVIEW") +
+    " STAGE=" +
+    (targetMatch ? "READY" : "BLOCKED") +
     " EXECUTED=FALSE"
   );
+}
+
+function stageAction() {
+  if (!selectedCourier) throw new Error("NO_VERIFIED_COURIER_ACTION");
+  if (!U.ferryAction || !U.ferryGo) throw new Error("BRIAR_FERRY_UNAVAILABLE");
+
+  const action = selectedCourier.inner.pocket_action;
+  U.ferryAction.value = JSON.stringify(action, null, 2);
+  U.ferryAction.dataset.courierMessageId = selectedCourier.env.message_id;
+  U.ferryAction.dataset.courierActionId = selectedCourier.inner.action_id;
+
+  U.stageStatus.textContent = "STAGED / GO REQUIRED";
+  setState("STAGED");
+  log(
+    "COURIER_STAGE=GREEN MESSAGE_ID=" +
+    selectedCourier.env.message_id +
+    " ACTION_ID=" +
+    selectedCourier.inner.action_id +
+    " EXECUTED=FALSE HUMAN_GO_REQUIRED=TRUE"
+  );
+
+  U.ferryAction.scrollIntoView({ behavior: "smooth", block: "center" });
+  U.ferryAction.focus({ preventScroll: true });
 }
 
 U.check?.addEventListener("click", async () => {
@@ -288,6 +339,7 @@ U.check?.addEventListener("click", async () => {
     if (U.status.textContent !== "RED") {
       U.status.textContent = "RED";
       U.auth.textContent = "REJECTED";
+      U.stageStatus.textContent = "BLOCKED";
       setState("RED");
       log("COURIER_INBOX=RED " + (e.message || e));
     }
@@ -297,5 +349,16 @@ U.check?.addEventListener("click", async () => {
   }
 });
 
-log("COURIER_INBOX_MODULE=GREEN MODE=FETCH_DECRYPT_DISPLAY_ONLY");
+U.stage?.addEventListener("click", () => {
+  try {
+    stageAction();
+  } catch (e) {
+    U.stageStatus.textContent = "RED";
+    setState("RED");
+    log("COURIER_STAGE=RED " + (e.message || e));
+    alert(e.message || e);
+  }
+});
+
+log("COURIER_INBOX_MODULE=GREEN MODE=FETCH_DECRYPT_STAGE_MANUAL_GO");
 })();

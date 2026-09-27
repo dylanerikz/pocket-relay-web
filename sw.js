@@ -1,4 +1,4 @@
-const C="pocket-relay-v0.3-courier-inbox-phase2";
+const C="pocket-relay-v0.4-courier-stage-phase3";
 const S=[
   "./",
   "./index.html",
