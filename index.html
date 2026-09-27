@@ -7,7 +7,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Pocket Relay">
 <link rel="manifest" href="manifest.webmanifest">
-<link rel="apple-touch-icon" href="icons/icon-192.png">
+<link rel="apple-touch-icon" href="icon-192.png">
 <link rel="stylesheet" href="styles.css">
 <title>Pocket Relay</title>
 </head>
@@ -86,12 +86,29 @@
 <button id="cryptoTest" class="btn danger">Run crypto self-test</button>
 </div>
 <pre id="cryptoResult">No crypto test run yet.</pre>
-<p class="micro">No GitHub token is stored here. Phase 1 does not contact Courier or publish anything.</p>
+<p class="micro">No GitHub token is stored here. The private key remains local and non-exportable.</p>
+</section>
+
+<section class="card accent">
+<small>06 // COURIER INBOX</small><h3>Open the locked box</h3>
+<p>Phase 2 reads public Courier envelopes, selects messages addressed to this device, authenticates and decrypts them locally, and displays the recovered action.</p>
+<dl>
+<dt>Inbox</dt><dd id="courierInboxStatus">NOT CHECKED</dd>
+<dt>Authentication</dt><dd id="courierInboxAuth">PENDING</dd>
+<dt>Workspace target</dt><dd id="courierInboxTarget">PENDING</dd>
+</dl>
+<div class="row">
+<button id="courierInboxCheck" class="btn primary">CHECK INBOX</button>
+</div>
+<label>Message ID<textarea id="courierInboxMessage" rows="2" readonly>None</textarea></label>
+<label>Decrypted Courier action<textarea id="courierInboxPayload" rows="18" readonly>Nothing decrypted yet.</textarea></label>
+<p class="micro"><strong>DISPLAY ONLY.</strong> This phase cannot execute a Courier payload or modify the workspace.</p>
 </section>
 
 <section class="card"><small>RECEIPT STREAM</small><h3>What just happened</h3><pre id="log">POCKET_RELAY_BOOT=GREEN</pre></section>
 </main>
-<footer>Pocket Relay Web v0.2 · CSR namespace · local-first · Courier Crypto Phase 1</footer>
+<footer>Pocket Relay Web v0.3 · CSR namespace · local-first · Courier Inbox Phase 2</footer>
 <script src="courier-crypto.js"></script>
 <script src="app.js"></script>
+<script src="courier-inbox.js"></script>
 </body></html>

@@ -1,1 +1,48 @@
-const C="pocket-relay-v0.2-courier-crypto-phase1";const S=["./","./index.html","./styles.css","./app.js","./courier-crypto.js","./manifest.webmanifest","./icons/icon-192.png","./icons/icon-512.png"];self.addEventListener("install",e=>e.waitUntil(caches.open(C).then(c=>c.addAll(S)).then(()=>self.skipWaiting())));self.addEventListener("activate",e=>e.waitUntil(caches.keys().then(k=>Promise.all(k.filter(x=>x!==C).map(x=>caches.delete(x)))).then(()=>self.clients.claim())));self.addEventListener("fetch",e=>{if(e.request.method!=="GET")return;e.respondWith(caches.match(e.request).then(r=>r||fetch(e.request).then(x=>{const y=x.clone();caches.open(C).then(c=>c.put(e.request,y));return x})))})
+const C="pocket-relay-v0.3-courier-inbox-phase2";
+const S=[
+  "./",
+  "./index.html",
+  "./styles.css",
+  "./app.js",
+  "./courier-crypto.js",
+  "./courier-inbox.js",
+  "./manifest.webmanifest",
+  "./icon-192.png",
+  "./icon-512.png"
+];
+
+self.addEventListener("install",e=>
+  e.waitUntil(
+    caches.open(C)
+      .then(c=>c.addAll(S))
+      .then(()=>self.skipWaiting())
+  )
+);
+
+self.addEventListener("activate",e=>
+  e.waitUntil(
+    caches.keys()
+      .then(k=>Promise.all(k.filter(x=>x!==C).map(x=>caches.delete(x))))
+      .then(()=>self.clients.claim())
+  )
+);
+
+self.addEventListener("fetch",e=>{
+  if(e.request.method!=="GET") return;
+  const u=new URL(e.request.url);
+
+  // Courier/GitHub network traffic must never be satisfied by the app-shell cache.
+  if(u.origin!==self.location.origin) return;
+
+  e.respondWith(
+    caches.match(e.request).then(r=>
+      r || fetch(e.request).then(x=>{
+        if(x.ok){
+          const y=x.clone();
+          caches.open(C).then(c=>c.put(e.request,y));
+        }
+        return x;
+      })
+    )
+  );
+});
