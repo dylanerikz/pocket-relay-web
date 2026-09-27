@@ -1,0 +1,14 @@
+{
+  "schema": "briar-courier-device-v1",
+  "device_id": "pr-944a7ca14b3b9d75",
+  "mailbox_id": "5695ea83bf8bff45",
+  "key_id": "81272da408fb7a1226af264af9eb89597fbf934032fa271d614f0328dc3cbe0f",
+  "curve": "P-256",
+  "public_key_jwk": {
+    "kty": "EC",
+    "crv": "P-256",
+    "x": "HCb60oKAZhmYVyi2o6wWA032YuqgUaT_BEYntDMExpA",
+    "y": "CUAwWcaENj_PFr3u0J-HwLbgJZ0CFmmAF9DnFyZY7LI"
+  },
+  "created_utc": "2026-09-27T08:08:10.992Z"
+}
