@@ -1,0 +1,76 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#21070b">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Pocket Relay">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icons/icon-192.png">
+<link rel="stylesheet" href="styles.css">
+<title>Pocket Relay</title>
+</head>
+<body>
+<header><div><small>BRIAR // MOBILE WORKSHOP</small><h1>Pocket Relay</h1></div><b id="state">BOOT</b></header>
+<main>
+<section class="hero card">
+<small>NATIVE-FEELING WEB WORKSPACE</small>
+<h2>Relay without a-Shell.</h2>
+<p>Local project storage, hash-pinned actions, rollback, receipts, and work bundles.</p>
+<div class="metrics">
+<div><strong id="mWorkspace">—</strong><span>workspace</span></div>
+<div><strong id="mSession">—</strong><span>session</span></div>
+<div><strong id="mChanges">0</strong><span>changes</span></div>
+</div>
+</section>
+
+<section class="card">
+<small>01 // WORKSPACE</small><h3>Bring Relay aboard</h3>
+<p>Import a folder from Files. Pocket Relay copies it into private on-device browser storage.</p>
+<label class="btn primary">Import workspace folder<input id="folder" type="file" webkitdirectory multiple hidden></label>
+<dl><dt>Name</dt><dd id="workspaceName">None</dd><dt>Files</dt><dd id="workspaceFiles">0</dd><dt>Storage</dt><dd>OPFS</dd></dl>
+</section>
+
+<section class="card">
+<small>02 // SESSION</small><h3>Track the work</h3>
+<label>Scoped goal<input id="goal" value="WORK_ON_RELAY_SOURCE"></label>
+<div class="row">
+<button id="begin" class="btn primary">Begin session</button>
+<button id="refresh" class="btn">Refresh</button>
+<button id="finish" class="btn">Finish</button>
+</div>
+<dl><dt>Session</dt><dd id="session">None</dd><dt>Windows acceptance</dt><dd>PENDING</dd></dl>
+<pre id="changes">No active changes.</pre>
+</section>
+
+<section class="card accent">
+<small>03 // BRIAR FERRY</small><h3>Action in. Receipt out.</h3>
+<p>Paste or import a Pocket Action. Pocket Relay verifies pre-hashes, snapshots originals, applies exact replacements, checks post-hashes, and emits a receipt.</p>
+<label>Incoming Pocket Action<textarea id="action" rows="11" spellcheck="false"></textarea></label>
+<div class="row">
+<button id="paste" class="btn">Paste</button>
+<label class="btn">Import action<input id="actionFile" type="file" accept=".json,application/json" hidden></label>
+<button id="go" class="btn danger">GO</button>
+</div>
+<div class="row">
+<button id="copyReceipt" class="btn primary">Copy receipt</button>
+<button id="downloadReceipt" class="btn">Download receipt</button>
+<button id="rollback" class="btn">Rollback last</button>
+</div>
+<label>Latest receipt<textarea id="receipt" rows="10" readonly></textarea></label>
+</section>
+
+<section class="card">
+<small>04 // HANDOFF</small><h3>Carry the work home</h3>
+<div class="row">
+<button id="bundle" class="btn primary">Export work bundle</button>
+<button id="index" class="btn">Export workspace index</button>
+</div>
+</section>
+
+<section class="card"><small>RECEIPT STREAM</small><h3>What just happened</h3><pre id="log">POCKET_RELAY_BOOT=GREEN</pre></section>
+</main>
+<footer>Pocket Relay Web v0.1 · CSR namespace · local-first</footer>
+<script src="app.js"></script>
+</body></html>

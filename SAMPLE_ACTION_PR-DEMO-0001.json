@@ -1,0 +1,15 @@
+{
+  "schemaVersion": 1,
+  "actionID": "PR-DEMO-0001",
+  "summary": "Replace one demo token",
+  "preconditions": [],
+  "replacements": [
+    {
+      "path": "demo.txt",
+      "oldText": "POCKET_RELAY_OLD",
+      "newText": "POCKET_RELAY_NEW",
+      "expectedCount": 1
+    }
+  ],
+  "postconditions": []
+}
