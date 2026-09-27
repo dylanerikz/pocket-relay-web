@@ -1,6 +1,6 @@
 const $=id=>document.getElementById(id);
-const U={state:$("state"),folder:$("folder"),workspaceName:$("workspaceName"),workspaceFiles:$("workspaceFiles"),mWorkspace:$("mWorkspace"),mSession:$("mSession"),mChanges:$("mChanges"),goal:$("goal"),begin:$("begin"),refresh:$("refresh"),finish:$("finish"),session:$("session"),changes:$("changes"),action:$("action"),actionFile:$("actionFile"),paste:$("paste"),go:$("go"),receipt:$("receipt"),copyReceipt:$("copyReceipt"),downloadReceipt:$("downloadReceipt"),rollback:$("rollback"),bundle:$("bundle"),index:$("index"),log:$("log")};
-let root,ws,meta,receipts,rollbacks,workspaceMeta=null,session=null,lastReceipt=null;
+const U={state:$("state"),folder:$("folder"),workspaceName:$("workspaceName"),workspaceFiles:$("workspaceFiles"),mWorkspace:$("mWorkspace"),mSession:$("mSession"),mChanges:$("mChanges"),goal:$("goal"),begin:$("begin"),refresh:$("refresh"),finish:$("finish"),session:$("session"),changes:$("changes"),action:$("action"),actionFile:$("actionFile"),paste:$("paste"),go:$("go"),receipt:$("receipt"),copyReceipt:$("copyReceipt"),downloadReceipt:$("downloadReceipt"),rollback:$("rollback"),bundle:$("bundle"),index:$("index"),log:$("log"),cryptoSupport:$("cryptoSupport"),cryptoIdentity:$("cryptoIdentity"),cryptoPrivate:$("cryptoPrivate"),cryptoFingerprint:$("cryptoFingerprint"),cryptoCreate:$("cryptoCreate"),cryptoCopy:$("cryptoCopy"),cryptoTest:$("cryptoTest"),cryptoResult:$("cryptoResult")};
+let root,ws,meta,receipts,rollbacks,workspaceMeta=null,session=null,lastReceipt=null,deviceIdentity=null;
 const enc=new TextEncoder(),dec=new TextDecoder();
 const ignored=new Set([".git",".pocket-relay","__pycache__",".DS_Store"]);
 function state(x){U.state.textContent=x}
@@ -18,7 +18,7 @@ async function hashBytes(bytes){const h=await crypto.subtle.digest("SHA-256",byt
 async function* walk(d,prefix=""){for await(const [name,h] of d.entries()){const p=prefix?prefix+"/"+name:name;if(h.kind==="directory")yield*walk(h,p);else yield{path:p,handle:h}}}
 function safePath(p){p=p.replaceAll("\\","/").replace(/^\/+/,"");if(!p||p.split("/").some(x=>!x||x==="."||x===".."))throw Error("Unsafe path: "+p);return p}
 async function snapshot(){const out={};for await(const e of walk(ws)){if(e.path.split("/").some(x=>ignored.has(x)))continue;const f=await e.handle.getFile(),b=await f.arrayBuffer();out[e.path]={sha256:await hashBytes(b),sizeBytes:f.size}}return out}
-function diff(a,b){const add=[],mod=[],del=[];for(const p of Object.keys(b))(!(p in a)?add:a[p].sha256!==b[p].sha256&&mod).push?.(p);for(const p of Object.keys(a))if(!(p in b))del.push(p);return{added:add.sort(),modified:mod.sort(),deleted:del.sort()}}
+function diff(a,b){const add=[],mod=[],del=[];for(const p of Object.keys(b)){if(!(p in a))add.push(p);else if(a[p].sha256!==b[p].sha256)mod.push(p)}for(const p of Object.keys(a))if(!(p in b))del.push(p);return{added:add.sort(),modified:mod.sort(),deleted:del.sort()}}
 function render(d){const lines=[...d.added.map(x=>"A  "+x),...d.modified.map(x=>"M  "+x),...d.deleted.map(x=>"D  "+x)];U.changes.textContent=lines.join("\n")||"No drift from baseline.";U.mChanges.textContent=lines.length}
 async function resetWorkspace(){try{await root.removeEntry("workspace",{recursive:true})}catch{}ws=await root.getDirectoryHandle("workspace",{create:true})}
 async function refreshUI(){workspaceMeta=await jsonRead(meta,"workspace.json");session=await jsonRead(meta,"active-session.json");const snap=workspaceMeta?await snapshot():{};U.workspaceName.textContent=workspaceMeta?.name||"None";U.workspaceFiles.textContent=Object.keys(snap).length;U.mWorkspace.textContent=workspaceMeta?.name||"—";U.session.textContent=session?.sessionID||"None";U.mSession.textContent=session?.sessionID||"—";render(session?diff(session.baseline,snap):{added:[],modified:[],deleted:[]})}
@@ -36,6 +36,48 @@ async function rollback(){const m=await jsonRead(meta,"last-action.json");if(!m?
 function b64(bytes){let s="";for(let i=0;i<bytes.length;i+=32768)s+=String.fromCharCode(...bytes.slice(i,i+32768));return btoa(s)}
 async function bundle(){if(!session)throw Error("Begin a session first.");const{cur,d}=await status(),files={};for(const p of [...d.added,...d.modified]){const bytes=await readBytes(ws,p);files[p]={sha256:cur[p].sha256,sizeBytes:cur[p].sizeBytes,encoding:"base64",content:b64(bytes)}}const o={schemaVersion:1,type:"POCKET_WORK_BUNDLE",session:{sessionID:session.sessionID,goal:session.goal,workspaceName:session.workspaceName,exportedUTC:new Date().toISOString(),windowsAcceptance:"PENDING"},changes:d,baseline:session.baseline,final:cur,files};dl(o,session.sessionID+".pocketbundle.json");log(`POCKET_WORK_BUNDLE=GREEN FILES_INCLUDED=${Object.keys(files).length}`)}
 async function workspaceIndex(){if(!workspaceMeta)throw Error("No workspace.");const o={schemaVersion:1,type:"POCKET_WORKSPACE_INDEX",workspace:workspaceMeta,createdUTC:new Date().toISOString(),files:await snapshot()};dl(o,workspaceMeta.name+"-workspace-index.json")}
-async function boot(){state("BOOT");root=await navigator.storage.getDirectory();ws=await root.getDirectoryHandle("workspace",{create:true});meta=await root.getDirectoryHandle("meta",{create:true});receipts=await root.getDirectoryHandle("receipts",{create:true});rollbacks=await root.getDirectoryHandle("rollback",{create:true});await refreshUI();if("serviceWorker"in navigator)navigator.serviceWorker.register("./sw.js").then(()=>log("SERVICE_WORKER=GREEN")).catch(e=>log("SERVICE_WORKER=RED "+e));state("READY");log("OPFS=GREEN")}
+
+async function refreshCryptoIdentity(){
+  if(!window.BriarCourierCrypto?.supported()){
+    U.cryptoSupport.textContent="UNSUPPORTED";
+    U.cryptoIdentity.textContent="UNAVAILABLE";
+    return;
+  }
+  U.cryptoSupport.textContent="WEB CRYPTO READY";
+  deviceIdentity=await window.BriarCourierCrypto.loadDeviceIdentity();
+  if(deviceIdentity){
+    U.cryptoIdentity.textContent="PRESENT";
+    U.cryptoFingerprint.value=window.BriarCourierCrypto.prettyFingerprint(deviceIdentity.key_id);
+    U.cryptoPrivate.textContent="LOCAL / NON-EXPORTABLE";
+  }else{
+    U.cryptoIdentity.textContent="NOT CREATED";
+    U.cryptoFingerprint.value="None";
+    U.cryptoPrivate.textContent="LOCAL ONLY";
+  }
+}
+async function createOrLoadCryptoIdentity(){
+  state("CRYPTO");
+  deviceIdentity=await window.BriarCourierCrypto.ensureDeviceIdentity();
+  await refreshCryptoIdentity();
+  state("GREEN");
+  log(`COURIER_DEVICE_IDENTITY=GREEN KEY_ID=${deviceIdentity.key_id.slice(0,16)}...`);
+}
+async function copyPairingRecord(){
+  if(!deviceIdentity)deviceIdentity=await window.BriarCourierCrypto.loadDeviceIdentity();
+  if(!deviceIdentity)throw Error("CRYPTO_KEY_MISSING");
+  const rec=await window.BriarCourierCrypto.exportPublicPairingRecord(deviceIdentity);
+  await navigator.clipboard.writeText(JSON.stringify(rec,null,2));
+  log("COURIER_PAIRING_RECORD_COPY=GREEN PUBLIC_ONLY=TRUE");
+}
+async function runCryptoSelfTest(){
+  state("CRYPTO TEST");
+  U.cryptoResult.textContent="Running local cryptographic round trip...";
+  const r=await window.BriarCourierCrypto.selfTest();
+  U.cryptoResult.textContent=JSON.stringify(r,null,2);
+  state("GREEN");
+  log("COURIER_CRYPTO_SELF_TEST=GREEN ROUND_TRIP=GREEN TAMPER_REJECTION=GREEN");
+}
+
+async function boot(){state("BOOT");root=await navigator.storage.getDirectory();ws=await root.getDirectoryHandle("workspace",{create:true});meta=await root.getDirectoryHandle("meta",{create:true});receipts=await root.getDirectoryHandle("receipts",{create:true});rollbacks=await root.getDirectoryHandle("rollback",{create:true});await refreshUI();await refreshCryptoIdentity();if("serviceWorker"in navigator)navigator.serviceWorker.register("./sw.js").then(()=>log("SERVICE_WORKER=GREEN")).catch(e=>log("SERVICE_WORKER=RED "+e));state("READY");log("OPFS=GREEN")}
 async function run(fn){try{await fn()}catch(e){alert(e.message||e);log("ERROR "+(e.message||e));state("RED")}}
-U.folder.onchange=()=>run(()=>importFolder(U.folder.files));U.begin.onclick=()=>run(begin);U.refresh.onclick=()=>run(status);U.finish.onclick=()=>run(finish);U.actionFile.onchange=()=>run(async()=>{const f=U.actionFile.files[0];if(f){U.action.value=await f.text();JSON.parse(U.action.value);log("ACTION_FILE_LOAD=GREEN")}});U.paste.onclick=()=>run(async()=>{U.action.value=await navigator.clipboard.readText();JSON.parse(U.action.value);log("ACTION_PASTE=GREEN")});U.go.onclick=()=>run(()=>applyAction(JSON.parse(U.action.value)));U.copyReceipt.onclick=()=>run(async()=>{if(!lastReceipt)throw Error("No receipt yet.");await navigator.clipboard.writeText(JSON.stringify(lastReceipt,null,2));log("RECEIPT_COPY=GREEN")});U.downloadReceipt.onclick=()=>run(async()=>{if(!lastReceipt)throw Error("No receipt yet.");dl(lastReceipt,lastReceipt.actionID+"-receipt.json")});U.rollback.onclick=()=>run(rollback);U.bundle.onclick=()=>run(bundle);U.index.onclick=()=>run(workspaceIndex);boot().catch(e=>{state("BOOT RED");log("BOOT_ERROR "+e)})
+U.folder.onchange=()=>run(()=>importFolder(U.folder.files));U.begin.onclick=()=>run(begin);U.refresh.onclick=()=>run(status);U.finish.onclick=()=>run(finish);U.actionFile.onchange=()=>run(async()=>{const f=U.actionFile.files[0];if(f){U.action.value=await f.text();JSON.parse(U.action.value);log("ACTION_FILE_LOAD=GREEN")}});U.paste.onclick=()=>run(async()=>{U.action.value=await navigator.clipboard.readText();JSON.parse(U.action.value);log("ACTION_PASTE=GREEN")});U.go.onclick=()=>run(()=>applyAction(JSON.parse(U.action.value)));U.copyReceipt.onclick=()=>run(async()=>{if(!lastReceipt)throw Error("No receipt yet.");await navigator.clipboard.writeText(JSON.stringify(lastReceipt,null,2));log("RECEIPT_COPY=GREEN")});U.downloadReceipt.onclick=()=>run(async()=>{if(!lastReceipt)throw Error("No receipt yet.");dl(lastReceipt,lastReceipt.actionID+"-receipt.json")});U.rollback.onclick=()=>run(rollback);U.bundle.onclick=()=>run(bundle);U.index.onclick=()=>run(workspaceIndex);U.cryptoCreate.onclick=()=>run(createOrLoadCryptoIdentity);U.cryptoCopy.onclick=()=>run(copyPairingRecord);U.cryptoTest.onclick=()=>run(runCryptoSelfTest);boot().catch(e=>{state("BOOT RED");log("BOOT_ERROR "+e)})

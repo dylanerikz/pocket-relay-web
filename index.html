@@ -69,8 +69,29 @@
 </div>
 </section>
 
+<section class="card accent">
+<small>05 // COURIER CRYPTO</small><h3>Build the lock before the mailbox</h3>
+<p>Phase 1 creates a Pocket Relay device identity locally and proves ECDH → HKDF-SHA-256 → AES-256-GCM without publishing any private payload.</p>
+<dl>
+<dt>Crypto</dt><dd id="cryptoSupport">CHECKING</dd>
+<dt>Device identity</dt><dd id="cryptoIdentity">NOT CREATED</dd>
+<dt>Private key</dt><dd id="cryptoPrivate">LOCAL ONLY</dd>
+</dl>
+<label>Public key fingerprint<textarea id="cryptoFingerprint" rows="3" readonly>None</textarea></label>
+<div class="row">
+<button id="cryptoCreate" class="btn primary">Create / load identity</button>
+<button id="cryptoCopy" class="btn">Copy pairing record</button>
+</div>
+<div class="row">
+<button id="cryptoTest" class="btn danger">Run crypto self-test</button>
+</div>
+<pre id="cryptoResult">No crypto test run yet.</pre>
+<p class="micro">No GitHub token is stored here. Phase 1 does not contact Courier or publish anything.</p>
+</section>
+
 <section class="card"><small>RECEIPT STREAM</small><h3>What just happened</h3><pre id="log">POCKET_RELAY_BOOT=GREEN</pre></section>
 </main>
-<footer>Pocket Relay Web v0.1 · CSR namespace · local-first</footer>
+<footer>Pocket Relay Web v0.2 · CSR namespace · local-first · Courier Crypto Phase 1</footer>
+<script src="courier-crypto.js"></script>
 <script src="app.js"></script>
 </body></html>
